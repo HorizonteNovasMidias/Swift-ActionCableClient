@@ -85,6 +85,7 @@ internal enum MessageType {
 
 internal struct Message {
     var channelName : String?
+    var udid : String?
     var actionName : String?
     var messageType : MessageType
     var data : Any?
@@ -92,6 +93,7 @@ internal struct Message {
   
     static func simple(_ channel: Channel, messageType: MessageType) -> Message {
         return Message(channelName: channel.name,
+                       udid: channel.udid,
                         actionName: nil,
                        messageType: messageType,
                               data: nil,

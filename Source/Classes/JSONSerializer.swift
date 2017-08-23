@@ -79,6 +79,7 @@ internal class JSONSerializer {
             }
           
             var channelName: String?
+            var udid: String?
             if let idObj = JSONObj["identifier"] {
                 var idJSON: Dictionary<String, AnyObject>
                 if let idString = idObj as? String {
@@ -99,6 +100,9 @@ internal class JSONSerializer {
                 if let nameStr = idJSON["channel"], let name = nameStr as? String {
                   channelName = name
                 }
+                
+                udid =  self.udid(from: idJSON)
+
             }
           
             switch messageType {
@@ -108,6 +112,7 @@ internal class JSONSerializer {
                   else { throw SerializationError.protocolViolation }
                 
                 return Message(channelName: channelName,
+                               udid: udid,
                                actionName:  nil,
                                messageType: messageType,
                                data: nil,
@@ -115,7 +120,7 @@ internal class JSONSerializer {
               
             // Welcome/Ping messages
             case .welcome, .ping:
-                return Message(channelName: nil,
+                return Message(channelName: nil, udid: nil,
                                actionName: nil,
                                messageType: messageType,
                                data: nil,
@@ -144,6 +149,7 @@ internal class JSONSerializer {
                 }
                 
                 return Message(channelName: channelName!,
+                               udid: udid,
                                actionName: messageActionName,
                                messageType: MessageType.message,
                                data: messageValue,
@@ -153,6 +159,14 @@ internal class JSONSerializer {
         } catch {
             throw error
         }
+    }
+    
+    static func udid(from dicIdentifier: [String: Any]?) -> String? {
+        return dicIdentifier?.sorted(by: {
+            $0.0.key < $0.1.key
+        }).flatMap({ (key, value) -> String in
+            return "\(value)"
+        }).joined(separator: "")
     }
 
 }

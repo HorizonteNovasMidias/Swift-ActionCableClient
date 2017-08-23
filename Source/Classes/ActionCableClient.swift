@@ -26,7 +26,7 @@ import Starscream
 public typealias ActionPayload = Dictionary<String, Any>
 
 open class ActionCableClient {
-  
+    
     //MARK: Socket
     fileprivate(set) var socket : WebSocket
     
@@ -81,7 +81,7 @@ open class ActionCableClient {
         get { return socket.origin }
         set { socket.origin = newValue }
     }
-  
+    
     /// Initialize an ActionCableClient.
     ///
     /// Each client represents one connection to the server.
@@ -101,19 +101,19 @@ open class ActionCableClient {
     @discardableResult
     open func connect() -> ActionCableClient {
         DispatchQueue.main.async {
-          if let callback = self.willConnect {
-            callback()
-          }
-          
-          ActionCableConcurrentQueue.async {
-            self.socket.connect()
-            self.reconnectionState = nil
-          }
+            if let callback = self.willConnect {
+                callback()
+            }
+            
+            ActionCableConcurrentQueue.async {
+                self.socket.connect()
+                self.reconnectionState = nil
+            }
         }
-  
+        
         return self
     }
-  
+    
     /// Disconnect from the server.
     open func disconnect() {
         manualDisconnectFlag = true
@@ -132,9 +132,9 @@ open class ActionCableClient {
                 self.reconnectionState = nil
                 return
             }
-          
+            
             if let callback = self.willConnect {
-              callback()
+                callback()
             }
             
             ActionCableConcurrentQueue.async {
@@ -142,7 +142,7 @@ open class ActionCableClient {
             }
         }
     }
-  
+    
     @discardableResult
     internal func transmit(_ data: ActionPayload? = nil, on channel: Channel, as command: Command) throws -> Bool {
         // First let's see if we can even encode this data
@@ -160,12 +160,12 @@ open class ActionCableClient {
         if (command == Command.message) {
             guard channel.isSubscribed else { throw TransmitError.notSubscribed }
         }
-      
+        
         // Let's check if we are connected.
         guard isConnected else { throw TransmitError.notConnected }
-      
+        
         socket.write(string: JSONString) {
-          //FINISHED!
+            //FINISHED!
         }
         
         return true
@@ -201,7 +201,7 @@ extension ActionCableClient {
     }
     
     /// Create and subscribe to a channel.
-    /// 
+    ///
     /// - Parameters:
     ///     - name: The name of the channel. The name must match the class name on the server exactly. (e.g. RoomChannel)
     ///     - identifier: An optional Dictionary with parameters to be passed into the Channel on each request
@@ -209,23 +209,26 @@ extension ActionCableClient {
     /// - Returns: a Channel
     
     public func create(_ name: String, identifier: ChannelIdentifier?, autoSubscribe: Bool=true, bufferActions: Bool=true) -> Channel {
+        
+        let channelUDID = JSONSerializer.udid(from: identifier) ?? name
+        
         // Look in existing channels and return that
-        if let channel = channels[name] { return channel }
+        if let channel = channels[channelUDID] { return channel }
         
         // Look in unconfirmed channels and return that
-        if let channel = unconfirmedChannels[name] { return channel }
+        if let channel = unconfirmedChannels[channelUDID] { return channel }
         
         // Otherwise create a new one
         let channel = Channel(name: name,
-            identifier: identifier,
-            client: self,
-            autoSubscribe: autoSubscribe,
-            shouldBufferActions: bufferActions)
-      
-        self.unconfirmedChannels[name] = channel
-      
+                              identifier: identifier,
+                              client: self,
+                              autoSubscribe: autoSubscribe,
+                              shouldBufferActions: bufferActions)
+        
+        self.unconfirmedChannels[channelUDID] = channel
+        
         if (channel.autoSubscribe) {
-          subscribe(channel)
+            subscribe(channel)
         }
         
         return channel
@@ -240,21 +243,36 @@ extension ActionCableClient {
 // MARK: Channel Subscriptions
 extension ActionCableClient {
     
+    public func udid(from identifier: [String: Any]) -> String {
+        return JSONSerializer.udid(from: identifier)!
+    }
+    
+    public func unsubscribed(for channelUDID: String) {
+        if let channel = channels[channelUDID] {
+            channel.unsubscribe()
+        }
+        
+        if let channel = unconfirmedChannels[channelUDID] {
+            unconfirmedChannels.removeValue(forKey: channelUDID)
+            channel.unsubscribe()
+        }
+    }
+    
     public func subscribed(_ name: String) -> Bool {
         return self.channels.keys.contains(name)
     }
     
     internal func subscribe(_ channel: Channel) {
         // Is it already added and subscribed?
-        if let existingChannel = channels[channel.name] , (existingChannel == channel) {
-          return
+        if let existingChannel = channels[channel.udid] , (existingChannel == channel) {
+            return
         }
-      
-        guard let channel = unconfirmedChannels[channel.name]
-          else { debugPrint("[ActionCableClient] Internal inconsistency error!"); return }
-      
+        
+        guard let channel = unconfirmedChannels[channel.udid]
+            else { debugPrint("[ActionCableClient] Internal inconsistency error!"); return }
+        
         do {
-          try transmit(on: channel, as: Command.subscribe)
+            try transmit(on: channel, as: Command.subscribe)
         } catch {
             debugPrint(error)
         }
@@ -262,13 +280,14 @@ extension ActionCableClient {
     
     internal func unsubscribe(_ channel: Channel) {
         do {
-          try self.transmit(on: channel, as: Command.unsubscribe)
+            try self.transmit(on: channel, as: Command.unsubscribe)
             
             let message = Message(channelName: channel.name,
-                                   actionName: nil,
+                                  udid: channel.udid,
+                                  actionName: nil,
                                   messageType: MessageType.cancelSubscription,
-                                         data: nil,
-                                        error: nil)
+                                  data: nil,
+                                  error: nil)
             
             onMessage(message)
         } catch {
@@ -278,20 +297,20 @@ extension ActionCableClient {
             debugPrint(error)
         }
     }
-  
+    
     @discardableResult
     internal func action(_ action: String, on channel: Channel, with data: ActionPayload?) throws -> Bool {
-          var internalData : ActionPayload
-          if let data = data {
-              internalData = data
-          } else {
-              internalData = ActionPayload()
-          }
-          
-          internalData["action"] = action
-      
-          return try transmit(internalData, on: channel, as: .message)
-      }
+        var internalData : ActionPayload
+        if let data = data {
+            internalData = data
+        } else {
+            internalData = ActionPayload()
+        }
+        
+        internalData["action"] = action
+        
+        return try transmit(internalData, on: channel, as: .message)
+    }
 }
 
 // MARK: WebSocket Callbacks
@@ -328,13 +347,13 @@ extension ActionCableClient {
         
         let channels = self.channels
         for (_, channel) in channels {
-            let message = Message(channelName: channel.name, actionName: nil, messageType: MessageType.hibernateSubscription, data: nil, error: nil)
+            let message = Message(channelName: channel.name, udid: channel.udid, actionName: nil, messageType: MessageType.hibernateSubscription, data: nil, error: nil)
             onMessage(message)
         }
         
         // Attempt Reconnection?
         if let unwrappedError = error {
-          connectionError = ConnectionError(from: unwrappedError)
+            connectionError = ConnectionError(from: unwrappedError)
             attemptReconnect = connectionError!.recoverable
         }
         
@@ -394,65 +413,65 @@ extension ActionCableClient {
     }
     
     fileprivate func onMessage(_ message: Message) {
-            switch(message.messageType) {
-            case .unrecognized:
-                break
-            case .welcome:
-                break
-            case .ping:
-                if let callback = onPing {
-                    DispatchQueue.main.async(execute: callback)
+        switch(message.messageType) {
+        case .unrecognized:
+            break
+        case .welcome:
+            break
+        case .ping:
+            if let callback = onPing {
+                DispatchQueue.main.async(execute: callback)
+            }
+        case .message:
+            if let channel = channels[message.udid!] {
+                // Notify Channel
+                channel.onMessage(message)
+                
+                if let callback = onChannelReceive {
+                    DispatchQueue.main.async(execute: { callback(channel, message.data, message.error) } )
                 }
-            case .message:
-                if let channel = channels[message.channelName!] {
-                    // Notify Channel
-                    channel.onMessage(message)
-                    
-                    if let callback = onChannelReceive {
-                        DispatchQueue.main.async(execute: { callback(channel, message.data, message.error) } )
-                    }
+            }
+        case .confirmSubscription:
+            if let channel = unconfirmedChannels.removeValue(forKey: message.udid!) {
+                self.channels.updateValue(channel, forKey: channel.udid)
+                
+                // Notify Channel
+                channel.onMessage(message)
+                
+                if let callback = onChannelSubscribed {
+                    DispatchQueue.main.async(execute: { callback(channel) })
                 }
-            case .confirmSubscription:
-                if let channel = unconfirmedChannels.removeValue(forKey: message.channelName!) {
-                    self.channels.updateValue(channel, forKey: channel.name)
-                    
-                    // Notify Channel
-                    channel.onMessage(message)
-                    
-                    if let callback = onChannelSubscribed {
-                        DispatchQueue.main.async(execute: { callback(channel) })
-                    }
+            }
+        case .rejectSubscription:
+            // Remove this channel from the list of unconfirmed subscriptions
+            if let channel = unconfirmedChannels.removeValue(forKey: message.udid!) {
+                
+                // Notify Channel
+                channel.onMessage(message)
+                
+                if let callback = onChannelRejected {
+                    DispatchQueue.main.async(execute: { callback(channel) })
                 }
-            case .rejectSubscription:
-                // Remove this channel from the list of unconfirmed subscriptions
-                if let channel = unconfirmedChannels.removeValue(forKey: message.channelName!) {
-                    
-                    // Notify Channel
-                    channel.onMessage(message)
-                    
-                    if let callback = onChannelRejected {
-                        DispatchQueue.main.async(execute: { callback(channel) })
-                    }
-                }
-            case .hibernateSubscription:
-              if let channel = channels.removeValue(forKey: message.channelName!) {
+            }
+        case .hibernateSubscription:
+            if let channel = channels.removeValue(forKey: message.udid!) {
                 // Add channel into unconfirmed channels
-                unconfirmedChannels[channel.name] = channel
+                unconfirmedChannels[channel.udid] = channel
                 
                 // We want to treat this like an unsubscribe.
                 fallthrough
-              }
-            case .cancelSubscription:
-                if let channel = channels.removeValue(forKey: message.channelName!) {
-                    
-                    // Notify Channel
-                    channel.onMessage(message)
-                    
-                    if let callback = onChannelUnsubscribed {
-                        DispatchQueue.main.async(execute: { callback(channel) })
-                    }
+            }
+        case .cancelSubscription:
+            if let channel = channels.removeValue(forKey: message.udid!) {
+                
+                // Notify Channel
+                channel.onMessage(message)
+                
+                if let callback = onChannelUnsubscribed {
+                    DispatchQueue.main.async(execute: { callback(channel) })
                 }
             }
+        }
     }
     
     fileprivate func onData(_ data: Data) {
@@ -462,12 +481,12 @@ extension ActionCableClient {
 
 extension ActionCableClient : CustomDebugStringConvertible {
     public var debugDescription : String {
-            return "ActionCableClient(url: \"\(socket.currentURL)\" connected: \(socket.isConnected) id: \(Unmanaged.passUnretained(self).toOpaque()))"
+        return "ActionCableClient(url: \"\(socket.currentURL)\" connected: \(socket.isConnected) id: \(Unmanaged.passUnretained(self).toOpaque()))"
     }
 }
 
 extension ActionCableClient : CustomPlaygroundQuickLookable {
-  public var customPlaygroundQuickLook: PlaygroundQuickLook {
+    public var customPlaygroundQuickLook: PlaygroundQuickLook {
         return PlaygroundQuickLook.url(socket.currentURL.absoluteString)
     }
 }

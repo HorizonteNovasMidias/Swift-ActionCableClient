@@ -46,6 +46,12 @@ open class Channel: Hashable, Equatable {
         return client.subscribed(name)
     }
     
+    
+    /// Unique channel identifier
+    open var udid: String {
+        return JSONSerializer.udid(from: identifier) ?? name
+    }
+    
     /// A block called when a message has been received on this channel.
     ///
     /// ```swift
