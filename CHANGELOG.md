@@ -1,5 +1,5 @@
 # GSATActionCableClient CHANGELOG
-
+ 
 
 ## [0.2.5](https://github.com/HorizonteNovasMidias/vod-api-client-ios/tree/0.2.5)
 
