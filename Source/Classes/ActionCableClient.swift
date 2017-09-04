@@ -258,8 +258,8 @@ extension ActionCableClient {
         }
     }
     
-    public func subscribed(_ name: String) -> Bool {
-        return self.channels.keys.contains(name)
+    public func subscribed(_ udid: String) -> Bool {
+        return self.channels.keys.contains(udid)
     }
     
     internal func subscribe(_ channel: Channel) {
