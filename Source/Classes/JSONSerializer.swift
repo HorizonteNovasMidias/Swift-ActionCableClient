@@ -161,7 +161,7 @@ public class JSONSerializer {
         }
     }
     
-    static func udid(from dicIdentifier: [String: Any]?) -> String? {
+    public static func udid(from dicIdentifier: [String: Any]?) -> String? {
         return dicIdentifier?.sorted(by: {
             $0.0.key < $0.1.key
         }).flatMap({ (key, value) -> String in

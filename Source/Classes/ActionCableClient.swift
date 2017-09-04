@@ -173,7 +173,7 @@ open class ActionCableClient {
     
     // MARK: Properties
     fileprivate var channelArray = Array<Channel>()
-    fileprivate(set) var channels = Dictionary<String, Channel>()
+    fileprivate(set) public var channels = Dictionary<String, Channel>()
     fileprivate var unconfirmedChannels = Dictionary<String, Channel>()
     
     /// Reconnection State
