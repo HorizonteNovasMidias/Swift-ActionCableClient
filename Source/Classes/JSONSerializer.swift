@@ -22,7 +22,7 @@
 
 import Foundation
 
-internal class JSONSerializer {
+public class JSONSerializer {
 
     static let nonStandardMessageTypes: [MessageType] = [.ping, .welcome]
   
