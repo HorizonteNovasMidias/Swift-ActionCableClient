@@ -1,5 +1,10 @@
 # GSATActionCableClient CHANGELOG
  
+## [0.2.7](https://github.com/HorizonteNovasMidias/vod-api-client-ios/tree/0.2.7)
+
+### Fixed
+- Corrige fila para a mensagem, deve ser serial ao inves de concorrente
+
 
 ## [0.2.6](https://github.com/HorizonteNovasMidias/vod-api-client-ios/tree/0.2.6)
 
