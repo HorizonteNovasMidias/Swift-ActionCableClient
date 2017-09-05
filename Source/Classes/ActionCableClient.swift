@@ -402,7 +402,7 @@ extension ActionCableClient {
     }
     
     fileprivate func onText(_ text: String) {
-        ActionCableConcurrentQueue.async(execute: { () -> Void in
+        ActionCableMessageSerialQueue.async(execute: { () -> Void in
             do {
                 let message = try JSONSerializer.deserialize(text)
                 self.onMessage(message)

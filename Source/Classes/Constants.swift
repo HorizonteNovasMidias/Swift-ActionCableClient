@@ -23,6 +23,7 @@
 import Foundation
 import Accelerate
 
+internal let ActionCableMessageSerialQueue = DispatchQueue(label: "com.ActionCableClient.MessageSerialQueue", attributes: []);
 internal let ActionCableSerialQueue = DispatchQueue(label: "com.ActionCableClient.SerialQueue", attributes: []);
 internal let ActionCableConcurrentQueue = DispatchQueue(label: "com.ActionCableClient.Conccurent", attributes: DispatchQueue.Attributes.concurrent)
 
