@@ -21,7 +21,7 @@
 //
 
 import UIKit
-import ActionCableClient
+import GSATActionCableClient
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {

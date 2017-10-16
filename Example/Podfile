@@ -1,10 +1,13 @@
 source 'https://github.com/CocoaPods/Specs.git'
+source 'https://github.com/HorizonteNovasMidias/ios-pod-specs.git'
+
+platform :ios, '9.0'
 use_frameworks!
 
 def common_pods
-  pod 'ActionCableClient', :path => '../'
-  pod 'SwiftyJSON'
-  pod 'SnapKit'
+  pod 'GSATActionCableClient', :path => '../'
+  pod 'SwiftyJSON', '~> 3.0.2'
+  pod 'SnapKit', '~> 4.0.0'
 end
 
 def common_test_pods
