@@ -1,5 +1,11 @@
 # GSATActionCableClient CHANGELOG
 
+## [1.0.1](https://github.com/HorizonteNovasMidias/Swift-ActionCableClient/tree/1.0.1)
+
+### Fixed
+- Removendo callback para main thread
+
+
 ## [1.0.0](https://github.com/HorizonteNovasMidias/Swift-ActionCableClient/tree/1.0.0)
 
 ### Update
