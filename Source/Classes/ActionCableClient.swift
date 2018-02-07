@@ -90,15 +90,13 @@ open class ActionCableClient {
     /// Connect with the server
     @discardableResult
     open func connect() -> ActionCableClient {
-        DispatchQueue.main.async {
-            if let callback = self.willConnect {
-                callback()
-            }
-            
-            ActionCableConcurrentQueue.async {
-                self.socket.connect()
-                self.reconnectionState = nil
-            }
+        if let callback = self.willConnect {
+            callback()
+        }
+        
+        ActionCableConcurrentQueue.async {
+            self.socket.connect()
+            self.reconnectionState = nil
         }
         
         return self
@@ -111,25 +109,23 @@ open class ActionCableClient {
     }
     
     internal func reconnect() {
-        DispatchQueue.main.async {
-            var shouldReconnect = true
-            if let callback = self.willReconnect {
-                shouldReconnect = callback()
-            }
-            
-            // Reconnection has been cancelled
-            if (!shouldReconnect) {
-                self.reconnectionState = nil
-                return
-            }
-            
-            if let callback = self.willConnect {
-                callback()
-            }
-            
-            ActionCableConcurrentQueue.async {
-                self.socket.connect()
-            }
+        var shouldReconnect = true
+        if let callback = self.willReconnect {
+            shouldReconnect = callback()
+        }
+        
+        // Reconnection has been cancelled
+        if (!shouldReconnect) {
+            self.reconnectionState = nil
+            return
+        }
+        
+        if let callback = self.willConnect {
+            callback()
+        }
+        
+        ActionCableConcurrentQueue.async {
+            self.socket.connect()
         }
     }
     
@@ -320,7 +316,7 @@ extension ActionCableClient {
         reconnectionState = nil
         
         if let callback = onConnected {
-            DispatchQueue.main.async(execute: callback)
+            callback()
         }
         
         for (_, channel) in self.unconfirmedChannels {
@@ -380,7 +376,7 @@ extension ActionCableClient {
             // as it will not seem accurate
             if manualDisconnectFlag { connectionError = nil }
             
-            DispatchQueue.main.async(execute: { callback(connectionError) })
+            callback(connectionError)
         }
         
         // Reset Manual Disconnect Flag
@@ -410,7 +406,7 @@ extension ActionCableClient {
             break
         case .ping:
             if let callback = onPing {
-                DispatchQueue.main.async(execute: callback)
+                callback()
             }
         case .message:
             if let channel = channels[message.udid!] {
@@ -418,7 +414,7 @@ extension ActionCableClient {
                 channel.onMessage(message)
                 
                 if let callback = onChannelReceive {
-                    DispatchQueue.main.async(execute: { callback(channel, message.data, message.error) } )
+                    callback(channel, message.data, message.error)
                 }
             }
         case .confirmSubscription:
@@ -429,7 +425,7 @@ extension ActionCableClient {
                 channel.onMessage(message)
                 
                 if let callback = onChannelSubscribed {
-                    DispatchQueue.main.async(execute: { callback(channel) })
+                    callback(channel)
                 }
             }
         case .rejectSubscription:
@@ -440,7 +436,7 @@ extension ActionCableClient {
                 channel.onMessage(message)
                 
                 if let callback = onChannelRejected {
-                    DispatchQueue.main.async(execute: { callback(channel) })
+                    callback(channel)
                 }
             }
         case .hibernateSubscription:
@@ -458,7 +454,7 @@ extension ActionCableClient {
                 channel.onMessage(message)
                 
                 if let callback = onChannelUnsubscribed {
-                    DispatchQueue.main.async(execute: { callback(channel) })
+                    callback(channel)
                 }
             }
         }

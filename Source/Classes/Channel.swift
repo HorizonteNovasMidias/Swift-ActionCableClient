@@ -196,27 +196,27 @@ extension Channel {
         switch message.messageType {
             case .message:
                 if let callback = self.onReceive {
-                    DispatchQueue.main.async(execute: { callback(message.data, message.error) })
+                   callback(message.data, message.error)
                 }
                 
                 if let actionName = message.actionName, let callback = self.onReceiveActionHooks[actionName] {
-                    DispatchQueue.main.async(execute: { callback(message.data, message.error) })
+                    callback(message.data, message.error)
                 }
             case .confirmSubscription:
                 if let callback = self.onSubscribed {
-                    DispatchQueue.main.async(execute: callback)
+                    callback()
                 }
                 
                 self.flushBuffer()
             case .rejectSubscription:
                 if let callback = self.onRejected {
-                    DispatchQueue.main.async(execute: callback)
+                    callback()
                 }
             case .hibernateSubscription:
               fallthrough
             case .cancelSubscription:
                 if let callback = self.onUnsubscribed {
-                    DispatchQueue.main.async(execute: callback)
+                    callback()
                 }
             default: break
         }
