@@ -1,5 +1,11 @@
 # GSATActionCableClient CHANGELOG
 
+## [1.0.2](https://github.com/HorizonteNovasMidias/Swift-ActionCableClient/tree/1.0.2)
+
+### Fixed
+- Fixando versão do Starscream para 3.0.5
+
+
 ## [1.0.1](https://github.com/HorizonteNovasMidias/Swift-ActionCableClient/tree/1.0.1)
 
 ### Fixed
